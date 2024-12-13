@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demand Graph</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        canvas {
+            max-width: 800px; /* Increase max-width */
+            width: 100%;      /* Make it responsive */
+            height: 400px;    /* Set a fixed height */
+            margin: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Demand Graph</h2>
+<canvas id="demandChart" width="800" height="400"></canvas>
+
+<script>
+    const ctx = document.getElementById('demandChart').getContext('2d');
+    const labels = {{ .Labels | toJson }};
+    const dataPoints = {{ .DataPoints | toJson }};
+
+    const demandChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Demand',
+                data: dataPoints,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+
+<!-- Table to display demand points -->
+<h3>Demand Points</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Time</th>
+            <th>Demand</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ range .DemandPoints }}
+        <tr>
+            <td>{{ .Time.Format "2006-01-02" }}</td> <!-- Format the time as needed -->
+            <td>{{ .Demand }}</td>
+        </tr>
+        {{ end }}
+    </tbody>
+</table>
+
+</body>
+</html>
