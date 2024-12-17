@@ -60,7 +60,7 @@ func (s *Server) registerHandlers() {
 	requireAuth := s.e.Group("")
 	// requireAuth.Use(echojwt.WithConfig(echojwt.Config{}))
 
-	adminOnly := requireAuth.Group("")
+	adminOnly := requireAuth.Group("", s.restrictAdmin)
 	adminOnly.GET("/create-user", s.createUserPage)
 	adminOnly.POST("/create-user", s.createUserHandler)
 	adminOnly.POST("/delete-user", s.deleteUserHandler)
@@ -75,7 +75,7 @@ func (s *Server) registerHandlers() {
 	adminOnly.POST("/create-sale", s.createSaleHandler)
 	adminOnly.POST("/delete-sale", s.deleteSaleHandler)
 
-	anyUser := requireAuth.Group("")
+	anyUser := requireAuth.Group("", s.restrictUser)
 	anyUser.GET("/users", s.usersPage)
 	anyUser.GET("/goods", s.goodsPage)
 	anyUser.GET("/get-demand", s.getDemandPage)
@@ -83,6 +83,7 @@ func (s *Server) registerHandlers() {
 	anyUser.GET("/demand", s.demandPage)
 	anyUser.GET("/best-goods", s.bestGoodsPage)
 	anyUser.GET("/download/pdf", s.getPDF)
+	anyUser.GET("/download/txt", s.getTXT)
 }
 
 func (s *Server) prepareTemplates() {

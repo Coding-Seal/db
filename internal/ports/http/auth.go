@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -20,14 +21,14 @@ func (s *Server) handleLogin(ctx echo.Context) error {
 	if err != nil {
 		s.e.Logger.Debug(err)
 
-		return ctx.Redirect(http.StatusSeeOther, "")
+		return ctx.Redirect(http.StatusSeeOther, "/login")
 	}
 
 	err = bcrypt.CompareHashAndPassword(user.PassHash, []byte(pswd))
 	if err != nil {
 		s.e.Logger.Debug(err)
 
-		return ctx.Redirect(http.StatusSeeOther, "")
+		return ctx.Redirect(http.StatusSeeOther, "/login")
 	}
 
 	token := userToJWT(user)
@@ -69,5 +70,56 @@ func getCookie(token string) *http.Cookie {
 		Expires:  time.Now().Add(time.Hour),
 		Secure:   true,
 		HttpOnly: true,
+	}
+}
+
+func (s *Server) restrictAdmin(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		cookie, err := c.Cookie("auth_token")
+		if err != nil {
+			return c.Redirect(http.StatusSeeOther, "/login")
+		}
+		tokenStr := cookie.Value
+
+		claims := &claims{}
+		_, err = jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			// Return the secret key for validation (replace with your actual secret)
+			return jwtSecret, nil
+		})
+		if err != nil {
+			return c.Redirect(http.StatusSeeOther, "/login")
+		}
+		if claims.UserRole == domain.ADMIN {
+			return next(c)
+		}
+		return c.Redirect(http.StatusSeeOther, "/login")
+	}
+}
+func (s *Server) restrictUser(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		cookie, err := c.Cookie("auth_token")
+		if err != nil {
+			return c.Redirect(http.StatusSeeOther, "/login")
+		}
+		tokenStr := cookie.Value
+
+		claims := &claims{}
+		_, err = jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			// Return the secret key for validation (replace with your actual secret)
+			return jwtSecret, nil
+		})
+		if err != nil {
+			return c.Redirect(http.StatusSeeOther, "/login")
+		}
+		if claims.UserRole == domain.ADMIN || claims.UserRole == domain.USER {
+			return next(c)
+		}
+		return c.Redirect(http.StatusSeeOther, "/login")
 	}
 }

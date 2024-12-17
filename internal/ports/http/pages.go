@@ -113,10 +113,12 @@ func (s *Server) demandPage(ctx echo.Context) error {
 	if err := ctx.Bind(&dto); err != nil {
 		return echo.ErrBadRequest.SetInternal(err)
 	}
+
 	start, err := time.Parse(time.DateOnly, dto.Start)
 	if err != nil {
 		return echo.ErrBadRequest.SetInternal(err)
 	}
+
 	end, err := time.Parse(time.DateOnly, dto.End)
 	if err != nil {
 		return echo.ErrBadRequest.SetInternal(err)
@@ -125,6 +127,7 @@ func (s *Server) demandPage(ctx echo.Context) error {
 	demandPoints, err := s.goodUC.GoodDemand(ctx.Request().Context(), dto.GoodID, start, end)
 	if err != nil {
 		s.e.Logger.Debugf("failed to get demand: %v", err)
+
 		return ctx.Redirect(http.StatusSeeOther, fmt.Sprintf("/get-demand?id=%d", dto.GoodID))
 	}
 
@@ -148,5 +151,6 @@ func (s *Server) bestGoodsPage(ctx echo.Context) error {
 	if err != nil {
 		return echo.ErrInternalServerError.SetInternal(err)
 	}
+
 	return s.r.Render(ctx.Response(), "best-goods.html", goods, ctx)
 }
